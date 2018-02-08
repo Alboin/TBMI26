@@ -1,0 +1,9 @@
+Training strong classifier 10 of 10. 
+Using 10 weak classifiers.
+100% Done.
+Time elapsed: 271.4373 seconds.
+
+Best accuracy (0.84037) is given with 4 weak classifiers.
+Number of training samples used: 500
+Number of test samples used: 4000
+Number of Haar-filters generated: 300
