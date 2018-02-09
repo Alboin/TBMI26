@@ -13,13 +13,13 @@ nbrHaarFeatures = 300;
 haarFeatureMasks = GenerateHaarFeatureMasks(nbrHaarFeatures);
 
 % Set number of training examples
-nbrTrainExamples = 500;
+nbrTrainExamples = 1000;
 trainImages = cat(3,faces(:,:,1:nbrTrainExamples),nonfaces(:,:,1:nbrTrainExamples));
 xTrain = ExtractHaarFeatures(trainImages,haarFeatureMasks);
 yTrain = [ones(1,nbrTrainExamples), -ones(1,nbrTrainExamples)];
 
 % Set number of test examples
-nbrTestExamples = 4000;
+nbrTestExamples = 3000;
 
 testImages  = cat(3,faces(:,:,(nbrTrainExamples+1):(nbrTrainExamples+nbrTestExamples)),...
                     nonfaces(:,:,(nbrTrainExamples+1):(nbrTrainExamples+nbrTestExamples)));
@@ -28,10 +28,13 @@ yTest = [ones(1,nbrTestExamples), -ones(1,nbrTestExamples)];
 
 
 % Loop variables
-accuracies = 0;
+accuracies_test = 0;
+accuracies_train = 0;
 numberOfClassifiers = 0;
+total_weak_classifiers = maxNumberClassifiers + floor(maxNumberClassifiers/2) * maxNumberClassifiers - (1 - mod(maxNumberClassifiers,2)) * (maxNumberClassifiers / 2);
 
 time_elapsed = 0;
+estimated_time = 0;
 tic;
 
 strong_classifiers = zeros(nbrHaarFeatures, 4, maxNumberClassifiers);
@@ -103,9 +106,11 @@ for nClassifiers = 1:maxNumberClassifiers
     end
     
 
-    final_classes = zeros(length(yTest), 1);
+    final_classes_test = zeros(length(yTest), 1);
+    final_classes_train = zeros(length(yTrain), 1);
+    
 
-    % Evaluate on training data
+    % Evaluate on test and training data
     for classifier = 1:nClassifiers
         
         haar_idx = weak_classifiers(classifier, 1);
@@ -114,22 +119,27 @@ for nClassifiers = 1:maxNumberClassifiers
         error = weak_classifiers(classifier, 4);
 
         % Classify all images with one weak classifier
-        C = WeakClassifier(threshold, polarity, xTest(haar_idx,:));
+        C_test = WeakClassifier(threshold, polarity, xTest(haar_idx,:));
+        C_train = WeakClassifier(threshold, polarity, xTrain(haar_idx,:));
         
         alpha = 0.5 * log((1 - error)/error);
         
         % Sum the results from the weak classifiers
-        final_classes = final_classes + alpha * C;
-
+        final_classes_test = final_classes_test + alpha * C_test;
+        final_classes_train = final_classes_train + alpha * C_train;
     end
 
-    final_strong_classifier = sign(final_classes);
+    final_strong_classifier_test = sign(final_classes_test);
+    final_strong_classifier_train = sign(final_classes_train);
     
-    accuracy = sum(final_strong_classifier == yTest')/length(final_strong_classifier);
+    accuracy_test = sum(final_strong_classifier_test == yTest')/length(final_strong_classifier_test);
+    accuracy_training = sum(final_strong_classifier_train == yTrain')/length(final_strong_classifier_train);
     
     % Save the accuracy for this strong classifier and the number of weak
     % classifiers that it consists of.
-    accuracies = [accuracies, accuracy];
+    accuracies_test = [accuracies_test, accuracy_test];
+    accuracies_train = [accuracies_train, accuracy_training];
+    
     numberOfClassifiers = [numberOfClassifiers, nClassifiers];
     % Also save the configurations for the strong classifier.
     strong_classifiers(:,:, nClassifiers) = weak_classifiers;
@@ -137,30 +147,37 @@ for nClassifiers = 1:maxNumberClassifiers
     % Display some info on the training progress
     clc;
     time_elapsed = time_elapsed + toc;
+    if estimated_time < 0.1
+        estimated_time = time_elapsed * total_weak_classifiers;
+    end
     disp(['Training strong classifier ',num2str(nClassifiers), ' of ' num2str(maxNumberClassifiers), '. ']);
     disp(['Using ', num2str(nClassifiers), ' weak classifiers.']);
     disp([num2str((nClassifiers / maxNumberClassifiers) * 100), '% Done.']);
-    disp(['Time elapsed: ', num2str(time_elapsed), ' seconds.']);
+    disp(['Time elapsed: ', num2str(floor(time_elapsed / 60)), 'm ', num2str(mod(time_elapsed,60)), 's.']);
+    disp(['Estimated training time: ', num2str(floor(estimated_time / 60)), 'm ', num2str(mod(estimated_time, 60)), ' s.']);
     tic;
 
 end
 
 % Remove first dummy-element.
-accuracies = accuracies(2:end);
+accuracies_test = accuracies_test(2:end);
+accuracies_train = accuracies_train(2:end);
 numberOfClassifiers = numberOfClassifiers(2:end);
 
 % Plot the accuracy as a function of how many weak classifiers in each
 % strong classifier.
-plot(numberOfClassifiers, accuracies, [1, maxNumberClassifiers], [0.8, 0.8], ':');
+plot(numberOfClassifiers, accuracies_train, '--', numberOfClassifiers, accuracies_test, [1, maxNumberClassifiers], [0.8, 0.8], ':');
+legend('Accuracy on training samples','Accuracy on test samples','Location','southeast')
 xlabel('Number of weak classifiers');
 ylabel('Accuracy');
 ylim([0.0 1.0]);
 title('Strong classifier accuracies');
 
-[best_accuracy, best_classifier_index] = max(accuracies);
+[best_accuracy_test, best_classifier_index] = max(accuracies_test);
 
+% Print some results and used parameters.
 fprintf('\n');
-disp(['Best accuracy (', num2str(best_accuracy), ') is given with ', num2str(best_classifier_index), ' weak classifiers.']);
+disp(['Best test-data accuracy (', num2str(best_accuracy_test), ') is given with ', num2str(best_classifier_index), ' weak classifiers.']);
 disp(['Number of training samples used: ', num2str(nbrTrainExamples)]);
 disp(['Number of test samples used: ', num2str(nbrTestExamples)]);
 disp(['Number of Haar-filters generated: ', num2str(nbrHaarFeatures)]);
@@ -169,10 +186,69 @@ disp(['Number of Haar-filters generated: ', num2str(nbrHaarFeatures)]);
 figure(2);
 colormap gray;
 for k = 1:maxNumberClassifiers
+    % Check if it is a weak classifier or just empty data
     if strong_classifiers(k,4,best_classifier_index) < 0.9999
         haar_index = strong_classifiers(k,1, best_classifier_index);
         subplot(5,5,k),imagesc(haarFeatureMasks(:,:,haar_index),[-1 2]);
         axis image;
         axis off;
+    end
+end
+
+
+% Extract some faces/non-faces that were missclassified  by the best
+% classifier.
+
+% Evaluate on test data
+for k = 1:maxNumberClassifiers
+    % Check if it is a weak classifier or just empty data
+    if strong_classifiers(k,4,best_classifier_index) < 0.9999
+        haar_idx = strong_classifiers(k, 1, best_classifier_index);
+        threshold = strong_classifiers(k, 2, best_classifier_index);
+        polarity = strong_classifiers(k, 3, best_classifier_index);
+        error = strong_classifiers(k, 4, best_classifier_index);
+
+        % Classify test images with one weak classifier
+        C_test = WeakClassifier(threshold, polarity, xTest(haar_idx,:));
+        
+        alpha = 0.5 * log((1 - error)/error);
+
+        % Sum the results from the weak classifiers
+        final_classes_test = final_classes_test + alpha * C_test;
+    end
+end
+% Do the classification
+final_strong_classifier_test = sign(final_classes_test);
+
+% Get missclassified test-cases
+missclassified = final_strong_classifier_test ~= yTest';
+
+
+figure(3);
+colormap gray;
+image_number = 1;
+% Find the images corresponding to the missclassifications and show 25 of them.
+% Show 12 missclassified faces.
+for i = 1:length(missclassified)
+    if missclassified(i)
+        subplot(5,5,image_number), imagesc(faces(:,:,i));
+        axis image;
+        axis off;
+        image_number = image_number + 1;
+    end
+    if image_number == 13
+        break;
+    end
+end
+% Show 13 missclassified non-faces.
+for i = length(missclassified)/2:length(missclassified)
+    if missclassified(i)
+        subplot(5,5,image_number), imagesc(nonfaces(:,:,i));
+        axis image;
+        axis off;
+        image_number = image_number + 1;
+    end
+    if image_number == 26
+        break;
     end
 end
