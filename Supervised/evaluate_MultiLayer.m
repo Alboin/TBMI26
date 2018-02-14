@@ -1,4 +1,4 @@
-%% This script will help you test out your single layer neural network code
+%% This script will help you test out multi single layer neural network code
 
 %% Select which data to use:
 
@@ -14,7 +14,7 @@ dataSetNr = 1; % Change this to load new data
 %% Select a subset of the training features
 
 numBins = 2; % Number of Bins you want to devide your data into
-numSamplesPerLabelPerBin = inf; % Number of samples per label per bin, set to inf for max number (total number is numLabels*numSamplesPerBin)
+numSamplesPerLabelPerBin = inf;%inf; % Number of samples per label per bin, set to inf for max number (total number is numLabels*numSamplesPerBin)
 selectAtRandom = true; % true = select features at random, false = select the first features
 
 [ Xt, Dt, Lt ] = selectTrainingSamples(X, D, L, numSamplesPerLabelPerBin, numBins, selectAtRandom );
@@ -24,20 +24,20 @@ selectAtRandom = true; % true = select features at random, false = select the fi
 %% Modify the X Matrices so that a bias is added
 
 % The Training Data
-Xtraining = [];
+Xtraining = cat(1,ones(1,length(Xt{1})), Xt{1});
 
 % The Test Data
-Xtest = [];
+Xtest = cat(1,ones(1,length(Xt{2})), Xt{2});
 
 
-%% Train your single layer network
-% Note: You nned to modify trainSingleLayer() in order to train the network
-
-numHidden = 7; % Change this, Number of hidde neurons 
+%% Train your multi layer network
+% Note: You need to modify trainMultiLayer() in order to train the network
+numLabels = length(unique(Lt{1}));
+numHidden = 7; % Change this, Number of hidden neurons 
 numIterations = 800; % Change this, Numner of iterations (Epochs)
 learningRate = 0.001; % Change this, Your learningrate
-W0 = 0; % Change this, Initiate your weight matrix W
-V0 = 0; % Change this, Initiate your weight matrix V
+W0 = rand(numHidden,size(Xtest,1)) * 0.0001 - 0.00005; % Change this, Initiate your weight matrix W
+V0 = rand(numHidden+1,numLabels) * 0.0001 - 0.00005; % Change this, Initiate your weight matrix V
 
 %
 tic

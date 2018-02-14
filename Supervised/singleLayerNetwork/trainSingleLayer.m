@@ -25,12 +25,16 @@ Yt = runSingleLayer(Xt, W0);
 Ytest = runSingleLayer(Xtest, W0);
 trainingError(1) = sum(sum((Yt - Dt).^2))/Nt;
 testError(1) = sum(sum((Ytest - Dtest).^2))/Ntest;
+%    Xij = cat(1, Xt(1,:), Xt(2,:), Xt(1,:), Xt(2,:), Xt(1,:), Xt(2,:));
 
 for n = 1:numIterations
+    
     Y = Wout*Xt;
+        
+    %gradient of the weights
+    grad_w = 2*(Y - Dt) * Xt'; 
     
-    grad_w =0;
-    
+    %gradient descent
     Wout = Wout - learningRate*grad_w;
     trainingError(1+n) = sum(sum((Wout*Xt - Dt).^2))/Nt;
     testError(1+n) = sum(sum((Wout*Xtest - Dtest).^2))/Ntest;

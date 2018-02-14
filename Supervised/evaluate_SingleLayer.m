@@ -26,18 +26,21 @@ selectAtRandom = true; % true = select features at random, false = select the fi
 %% Modify the X Matrices so that a bias is added
 
 % The Training Data
-Xtraining = [];
-
+Xtraining = cat(1,ones(1,length(Xt{1})), Xt{1}); 
 % The Test Data
-Xtest = [];
+Xtest = cat(1,ones(1,length(Xt{2})), Xt{2});
 
 
 %% Train your single layer network
 % Note: You nned to modify trainSingleLayer() in order to train the network
 
-numIterations = 40000; % Change this, Numner of iterations (Epochs)
-learningRate = 0.00005; % Change this, Your learningrate
-W0 = 0; % Change this, Initiate your weight matrix W
+numLabels = length(unique(Lt{1}));
+numIterations = 400; % Change this, Number of iterations (Epochs)
+learningRate = 0.00002; % Change this, Your learningrate
+
+%initialize with small weights, close to zero, both neg and pos
+
+W0 = rand(numLabels,size(Xtest,1)) * 0.0001 - 0.00005; % Change this, Initiate your weight matrix W
 
 [W, trainingError, testError ] = trainSingleLayer(Xtraining,Dt{1},Xtest,Dt{2}, W0,numIterations, learningRate );
 

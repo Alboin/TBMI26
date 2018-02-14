@@ -1,7 +1,7 @@
 function [Wout,Vout, trainingError, testError ] = trainMultiLayer(Xtraining,Dtraining,Xtest,Dtest, W0, V0,numIterations, learningRate )
 %TRAINMULTILAYER Trains the network (Learning)
 %   Inputs:
-%               X* - Trainin/test features (matrix)
+%               X* - Training/test features (matrix)
 %               D* - Training/test desired output of net (matrix)
 %               V0 - Weights of the output neurons (matrix)
 %               W0 - Weights of the output neurons (matrix)
@@ -32,12 +32,22 @@ trainingError(1) = sum(sum((Ytraining - Dtraining).^2))/(numTraining*numClasses)
 testError(1) = sum(sum((Ytest - Dtest).^2))/(numTest*numClasses);
 
 for n = 1:numIterations
-    Ytraining = runMultiLayer(Xtraining, Wout, Vout);
+    [Ytraining,~,U] = runMultiLayer(Xtraining, Wout, Vout);
 
-    grad_v = 0; %Calculate the gradient for the output layer
-    grad_w = 0; %..and for the hidden layer.
-
-
+    dEdY = 2*(Ytraining - Dtraining);
+    
+    grad_v =  dEdY* U'; %Calculate the gradient for the output layer,
+                                %basically similar to single layer
+    dYdU = Vout(2:end,:)'; %skip first row with bias, since this does not affect W
+    dUdS = 1 - U(2:end,:).^2;
+    dSdW = Xtraining';
+    
+    size(dYdU)
+    size(dEdY)
+    size(dUdS)
+    size(dSdW)
+    grad_w = (dUdS * dSdW)' .* (dYdU' *dEdY) ;% * dYdU * dUdS * dSdW ;%..and for the hidden layer.
+                    % Here we need to consider the chain rule
 
     Wout = Wout - learningRate * grad_w; %Take the learning step.
     Vout = Vout - learningRate * grad_v; %Take the learning step.

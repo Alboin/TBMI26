@@ -4,6 +4,8 @@ numClasses = length(classes);
 cM = zeros(numClasses);
 
 % Add your own code here
+cM = confusionmat(Lclass,Ltrue);
+
 
 end
 

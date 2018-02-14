@@ -36,7 +36,7 @@ LkNN = kNN(Xt{2}, k, Xt{1}, Lt{1});
 %% Calculate The Confusion Matrix and the Accuracy
 % Note: you have to modify the calcConfusionMatrix() function yourselfs.
 
-% The confucionMatrix
+% The confusionMatrix
 cM = calcConfusionMatrix( LkNN, Lt{2})
 
 % The accuracy
