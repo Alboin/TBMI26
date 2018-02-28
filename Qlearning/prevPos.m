@@ -17,7 +17,7 @@ function [x_out,y_out] = prevPos(x_in, y_in, action)
         y_out = y_out + 1;
     end
     
-    x_out = max(0, min(x_out, GWXSIZE));
-    y_out = max(0, min(y_out, GWYSIZE));
+    x_out = max(1, min(x_out, GWXSIZE));
+    y_out = max(1, min(y_out, GWYSIZE));
 end
 

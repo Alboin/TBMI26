@@ -1,22 +1,55 @@
 clear;
 clc;
 
-world  = 1;
+world  = 2;
 gwinit(world);
 
 global GWXSIZE;
 global GWYSIZE;
+global GWTERM;
+global GWFEED;
 
 positionsX = [];
 positionsY = [];
 actions = [];
 
+%Q = ones(GWXSIZE, GWYSIZE) * 3;
+
 %Q-matrix storing rewards for every action from every state/position.
 Q = zeros(GWXSIZE, GWYSIZE, 4); %(posx, posy, action)
+R = zeros(GWXSIZE, GWYSIZE, 4);
 
-% Randomly initialize Q
+% Initialize Q with noise
 %Q = rand(GWXSIZE, GWYSIZE, 4);
 
+% Set up R to include the feedback for different moves
+for i = 1:4
+   for x = 1:GWXSIZE
+       for y = 1:GWYSIZE
+           [x_modified, y_modified] = prevPos(x, y, i);
+           R(x_modified, y_modified, i) = GWFEED(x,y);
+           
+           if i == 1 && x == GWXSIZE
+               R(x, y, i) = -inf;
+           elseif i == 2 && x == 1
+               R(x, y, i) = -inf;
+           elseif i == 3 && y == GWYSIZE
+               R(x, y, i) = -inf;
+           elseif i == 4 && y == 1
+               R(x, y, i) = -inf;
+           end
+           
+       end
+   end
+end
+
+% Set up the end state reward for R
+[maxValue, linearIndexesOfMaxes] = max(GWTERM(:));
+[rowsOfMaxes, colsOfMaxes] = find(GWTERM == maxValue);
+for i = 1:4
+    [x,y] = prevPos(rowsOfMaxes, colsOfMaxes, i);
+    R(x,y,i) = 10; 
+end
 
 %%
 tic
@@ -30,13 +63,15 @@ for epoch = 1:maxEpoch
     state = gwstate;
 
     while ~state.isterminal
+        %gwdraw;
+        %gwplotallarrows(Q);
 
+        
         state = gwstate;
 
         %Choose between exploring or exploiting
         e = rand();
         threshold = 1 - 0.99 * epoch/maxEpoch;
-        threshold = 0.9;
         if(e < threshold)
             %Random (exploring) action
             action = randi([1,4], 1, 1);
@@ -57,27 +92,19 @@ for epoch = 1:maxEpoch
         % Calculate Q from current and next state.
         Qcurrent = Q(currState.pos(1), currState.pos(2),action);
         
+       if i == 1 && x == GWXSIZE
+           R(x, y, i) = -inf;
+       elseif i == 2 && x == 1
+           R(x, y, i) = -inf;
+       elseif i == 3 && y == GWYSIZE
+           R(x, y, i) = -inf;
+       elseif i == 4 && y == 1
+           R(x, y, i) = -inf;
         reward = nextState.feedback;
         
-        % Give the action to try to walk through a wall infinite negative
-        % feedback.
-        if action == 1 && currState.pos(1) == GWXSIZE
-           reward = -inf;
-        elseif action == 2 && currState.pos(1) == 1
-           reward = -inf;
-        elseif action == 3 && currState.pos(2) == GWYSIZE
-           reward = -inf;
-        elseif action == 4 && currState.pos(2) == 1
-           reward = -inf;
-        end
-        
-        % Set the reward for the terminal state.
-        if nextState.isterminal
-            reward = 10;
-        end
-        
-        % Update Q
         Q(currState.pos(1), currState.pos(2),action) = (1 - alpha) * Qcurrent + alpha * (reward + gamma * maxQnext);
+        
+
 
     end
     
