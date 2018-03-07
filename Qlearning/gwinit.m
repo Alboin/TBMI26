@@ -100,7 +100,6 @@ end
 
 
 
-
 while 1
   GWPOS = ceil([rand*GWXSIZE,rand*GWYSIZE])';
   if k == 4 %8 if using all worlds
