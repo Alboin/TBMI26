@@ -35,18 +35,22 @@ for n = 1:numIterations
     [Ytraining,~,U] = runMultiLayer(Xtraining, Wout, Vout);
 
     dEdY = 2*(Ytraining - Dtraining);
-    
-    grad_v =  dEdY* U'; %Calculate the gradient for the output layer,
-                                %basically similar to single layer
     dYdU = Vout(2:end,:)'; %skip first row with bias, since this does not affect W
     dUdS = 1 - U(2:end,:).^2;
     dSdW = Xtraining';
     
+    grad_v =  dEdY* U'; %Calculate the gradient for the output layer,
+                                %basically similar to single layer
+    %Debugging
     size(dYdU)
     size(dEdY)
     size(dUdS)
     size(dSdW)
-    grad_w = (dUdS * dSdW)' .* (dYdU' *dEdY) ;% * dYdU * dUdS * dSdW ;%..and for the hidden layer.
+    
+    size(dUdS * dSdW)
+    size(dYdU' * dEdY)
+    
+    grad_w = (dUdS * dSdW)' .* (dYdU' *dEdY);% * dYdU * dUdS * dSdW ;%..and for the hidden layer.
                     % Here we need to consider the chain rule
 
     Wout = Wout - learningRate * grad_w; %Take the learning step.
