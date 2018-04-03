@@ -7,34 +7,37 @@
 % 3 = dot cloud 3
 % 4 = OCR data
 
-dataSetNr = 1; % Change this to load new data 
+clear;
+clc;
+
+dataSetNr = 2; % Change this to load new data 
 
 [X, D, L] = loadDataSet( dataSetNr );
 
 % You can plot and study dataset 1 to 3 by running:
 % plotCase(X,D)
 
-%% Select a subset of the training features
+% Select a subset of the training features
 
-numBins = 2; % Number of Bins you want to devide your data into
+numBins = 2; % Number of Bins you want to divide your data into
 numSamplesPerLabelPerBin = 100; % Number of samples per label per bin, set to inf for max number (total number is numLabels*numSamplesPerBin)
 selectAtRandom = true; % true = select features at random, false = select the first features
 
 [ Xt, Dt, Lt ] = selectTrainingSamples(X, D, L, numSamplesPerLabelPerBin, numBins, selectAtRandom );
 
 % Note: Xt, Dt, Lt will be cell arrays, to extract a bin from them use i.e.
-% XBin1 = Xt{1};
+% XBin2 = Xt{2};
 
-%% Use kNN to classify data
-% Note: you have to modify the kNN() function yourselfs.
+% Use kNN to classify data
+% Note: you have to modify the kNN() function yourselves.
 
 % Set the number of neighbors
-k = 1;
+k = 4;
 
 LkNN = kNN(Xt{2}, k, Xt{1}, Lt{1});
 
 %% Calculate The Confusion Matrix and the Accuracy
-% Note: you have to modify the calcConfusionMatrix() function yourselfs.
+% Note: you have to modify the calcConfusionMatrix() function yourselves.
 
 % The confusionMatrix
 cM = calcConfusionMatrix( LkNN, Lt{2})

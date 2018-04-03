@@ -43,18 +43,15 @@ for n = 1:numIterations
     N = numTraining;%size(W0,1) * size(W0,2) * size(V0,1) * size(V0,2);
 
     dEdY = 2/N * (Ytraining - Dtraining);
-    %dYdU = Vout(2:end,:)'; %skip first row with bias, since this does not affect W
-    dYdU = Vout(:,2:end)';
+    dYdU = Vout(:,2:end)'; %skip first row with bias, since this does not affect W
     dUdS = tanhprim(U(2:end, :));%1 - U(2:end,:).^2;
     dSdW = Xtraining';
     
     grad_v =  dEdY* U'; %Calculate the gradient for the output layer,
                                 %basically similar to single layer
     
-    %grad_w = (dUdS * dSdW)' .* (dYdU' *dEdY);% * dYdU * dUdS * dSdW ;%..and for the hidden layer.
     grad_w = dYdU*dEdY.*dUdS*dSdW;
-    %2/N*V(:,2:end)’*(Y-D).*tanhprim(U(2:end,:))*X’ 
-                    % Here we need to consider the chain rule
+
 
     Wout = Wout - learningRate * grad_w; %Take the learning step.
     Vout = Vout - learningRate * grad_v; %Take the learning step.

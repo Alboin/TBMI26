@@ -11,14 +11,14 @@ clear;
 close all;
 clc;
 
-dataSetNr = 1; % Change this to load new data
+dataSetNr = 3; % Change this to load new data
 
 [X, D, L] = loadDataSet( dataSetNr );
 
 % Select a subset of the training features
 
 numBins = 2; % Number of Bins you want to devide your data into
-numSamplesPerLabelPerBin = inf;%inf; % Number of samples per label per bin, set to inf for max number (total number is numLabels*numSamplesPerBin)
+numSamplesPerLabelPerBin = inf; % Number of samples per label per bin, set to inf for max number (total number is numLabels*numSamplesPerBin)
 selectAtRandom = true; % true = select features at random, false = select the first features
 
 [ Xt, Dt, Lt ] = selectTrainingSamples(X, D, L, numSamplesPerLabelPerBin, numBins, selectAtRandom );
@@ -42,27 +42,33 @@ maxTrainVal = max(max(Xtraining));
 XtestNonNormalized = Xtest;
 XtrainingNonNormalized = Xtraining;
 
-%Normalize data
-%Xtest = (Xtest - minTestVal) / ( maxTestVal - minTestVal );% * 1.8 - 1;
-%Xtraining = (Xtraining - minTrainVal) / ( maxTrainVal - minTrainVal );% * 1.8 - 1;
+if dataSetNr == 4
+    %Normalize data if OCR
+    Xtest = (Xtest - minTestVal) / ( maxTestVal - minTestVal );
+    Xtraining = (Xtraining - minTrainVal) / ( maxTrainVal - minTrainVal );
+end
+
+
 
 
 %% Train your multi layer network
 
-              %neurons %iterations %learningrate
-trainParameters = [ 10 8000 0.005;
-                    20 6000 0.005;
-                    20 6000 0.005;
-                    20 6000 0.005];
-
+              %neurons %iterations %learningrate %weight initialization
+trainParameters = [ 10 8000 0.005 0.001; %dataSetNr = 1
+                    20 6000 0.005 0.001; %dataSetNr = 2
+                    40 20000 0.005 0.001; %dataSetNr = 3
+                    80 40000 0.001 0.0001]; %dataSetNr = 4
+                
+                %the overtraining were performed with parameters:
+                % 20 400000 0.005 0.001 and bin size 10 instead of inf
 
 % Note: You need to modify trainMultiLayer() in order to train the network
 numLabels = length(unique(Lt{1}));
 numHidden = trainParameters(dataSetNr, 1);
 numIterations = trainParameters(dataSetNr, 2);
 learningRate = trainParameters(dataSetNr, 3);
-W0 = rand(numHidden,size(Xtest,1)) * 0.001 - 0.0005; % Change this, Initiate your weight matrix W
-V0 = rand(numLabels, numHidden+1) * 0.001 - 0.0005;
+W0 = rand(numHidden,size(Xtest,1)) * trainParameters(dataSetNr, 4) - (trainParameters(dataSetNr, 4) / 2); % Change this, Initiate your weight matrix W
+V0 = rand(numLabels, numHidden+1) * trainParameters(dataSetNr, 4) - (trainParameters(dataSetNr, 4) / 2);
 
 %
 tic
