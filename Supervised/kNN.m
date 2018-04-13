@@ -18,7 +18,6 @@ function [ labelsOut ] = kNN(X, k, Xt, Lt)
 %Lt = Lt{1};
 
 
-
 labelsOut  = zeros(size(X,2),1);
 classes = unique(Lt);
 numClasses = length(classes);
@@ -28,7 +27,13 @@ numClasses = length(classes);
 % Compare each sample in X with all samples in Xt
 % Select the k closest neighbours in Xt, save the indices of these.
 % knnIndices is sorted so that the closest neighbour is the first column etc.
-knnIndices = knnsearch(Xt',X', 'K', k, 'IncludeTies', true);
+%knnIndices = knnsearch(Xt',X', 'K', k, 'IncludeTies', true);
+
+knnIndices = zeros(length(X), k);
+
+for sample = 1:length(X)
+    knnIndices(sample,:) = findNeighbours(Xt, X(:,sample), k);
+end
 
 for sampleIndex = 1:length(X)
     
@@ -50,7 +55,7 @@ for sampleIndex = 1:length(X)
             for labelIndex = 1:numClasses
                 %Count the number of occurrences of each class.
                 %Also, add the distance of each sample of same class.
-                if Lt(knnIndices{sampleIndex}(neighbourIndex)) == occurrenceMatrix(1,labelIndex)
+                if Lt(knnIndices(sampleIndex, neighbourIndex)) == occurrenceMatrix(1,labelIndex)
                     occurrenceMatrix(2,labelIndex) = occurrenceMatrix(2,labelIndex) + 1;
                 end
             end
@@ -67,7 +72,7 @@ for sampleIndex = 1:length(X)
             
             k_temp = k_temp - 1;
             %remove the final element, by changing the class index to a neg value. 
-            knnIndices{sampleIndex}(k_temp + 1) = k_temp - k;
+            knnIndices(sampleIndex, k_temp + 1) = k_temp - k;
 
             %run function again
             loopAgain = true;
@@ -79,7 +84,7 @@ for sampleIndex = 1:length(X)
             % Classify X using Lt to look up the classes of closest neighbours in Xt.
             % ('mode()' selects the most frequent value in a vector)
             % use only the k_temp closest neighbours (no ties).
-            labelsOut(sampleIndex) = mode(Lt(knnIndices{sampleIndex}(1:k_temp)));
+            labelsOut(sampleIndex) = mode(Lt(knnIndices(sampleIndex, 1:k_temp)));
             
             % Debugging
             %if wasTie

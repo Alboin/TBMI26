@@ -4,8 +4,9 @@
 % 2 = dot cloud 2
 % 3 = dot cloud 3
 % 4 = OCR data
-
-dataSetNr = 3; % Change this to load new data 
+clear;
+clc;
+dataSetNr = 4; % Change this to load new data 
 
 [X, D, L] = loadDataSet( dataSetNr );
 

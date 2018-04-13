@@ -10,7 +10,7 @@
 clear;
 clc;
 
-dataSetNr = 2; % Change this to load new data 
+dataSetNr = 4; % Change this to load new data 
 
 [X, D, L] = loadDataSet( dataSetNr );
 
